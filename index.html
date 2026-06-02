@@ -3,275 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lector QR - Registro de Asistencia</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>Escáner de Códigos QR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --background: #f3f4f6;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-stop {
+            background-color: #ef4444;
+        }
+        .btn-stop:hover {
+            background-color: #dc2626;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 20px auto;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .history-container {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f9fafb;
+            color: #6b7280;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .no-data {
+            color: #9ca3af;
+            text-align: center;
+            font-style: italic;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen antialiased">
+<body>
 
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-blue-400 tracking-tight sm:text-4xl">
-                📷 Escáner QR de Asistencia
-            </h1>
-            <p class="mt-2 text-sm text-slate-400">
-                Escanea códigos QR para almacenar registros con fecha y hora en tiempo real.
-            </p>
-        </header>
+    <div class="container">
+        <h1>Escáner QR Pro</h1>
+        <p>Presiona el botón para iniciar la cámara y escanear un código.</p>
+        
+        <button id="btn-toggle" class="btn">Iniciar Cámara</button>
+        
+        <div id="reader" style="display: none;"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-5 space-y-6">
-                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
-                    <div>
-                        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <span>📹</span> Cámara en Vivo
-                        </h2>
-                        
-                        <div class="bg-black rounded-xl overflow-hidden border border-slate-950 relative shadow-inner aspect-square flex items-center justify-center">
-                            <div id="reader" class="w-full h-full"></div>
-                            <div id="placeholder-scanner" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-950 p-4 text-center">
-                                <span class="text-4xl mb-2">📷</span>
-                                <p class="text-xs">Cámara apagada</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 space-y-2">
-                        <button onclick="startScanner()" id="btn-start" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 px-4 rounded-xl font-bold text-sm transition shadow-lg cursor-pointer flex items-center justify-center gap-2">
-                            ⚡ Activar Cámara móvil
-                        </button>
-                        <button onclick="stopScanner()" id="btn-stop" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 py-2.5 px-4 rounded-xl font-semibold text-sm transition hidden cursor-pointer flex items-center justify-center gap-2">
-                            🛑 Detener Cámara
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60 flex justify-between items-center">
-                    <span class="text-xs text-slate-400 font-medium">¿Necesitas una copia de seguridad?</span>
-                    <button onclick="exportToJS()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer">
-                        💾 Descargar Backup (.JS)
-                    </button>
-                </div>
-            </div>
-
-            <div class="lg:col-span-7">
-                <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden h-full flex flex-col">
-                    <div class="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
-                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                            <span>📋</span> Historial de Capturas
-                        </h2>
-                        <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300 font-semibold transition cursor-pointer">
-                            Limpiar todo
-                        </button>
-                    </div>
-
-                    <div class="overflow-x-auto flex-1 max-h-[460px] overflow-y-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="sticky top-0 bg-slate-700 text-slate-300 text-xs font-bold uppercase tracking-wider">
-                                <tr>
-                                    <th class="p-4 w-16 text-center">#</th>
-                                    <th class="p-4">Dato Detectado (QR)</th>
-                                    <th class="p-4">Fecha y Hora</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-registros" class="divide-y divide-slate-700/50 text-sm">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <div class="history-container">
+            <h3>Códigos Escaneados</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Contenido del QR</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr id="row-empty">
+                        <td colspan="2" class="no-data">No hay códigos escaneados aún.</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // Array global para almacenar los QR escaneados en memoria
-        let registrosQR = [];
-        let html5QrCode = null;
+        const btnToggle = document.getElementById('btn-toggle');
+        const readerDiv = document.getElementById('reader');
+        const tableBody = document.getElementById('history-table-body');
+        const rowEmpty = document.getElementById('row-empty');
 
-        // Carga automática inicial desde LocalStorage para no perder datos al recargar
-        document.addEventListener("DOMContentLoaded", () => {
-            const datosGuardados = localStorage.getItem("registros_qr_asistencia");
-            if (datosGuardados) {
-                registrosQR = JSON.parse(datosGuardados);
-                renderTable();
+        let html5QrCode = null;
+        let isScanning = false;
+
+        // Configuración del escáner
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        btnToggle.addEventListener('click', () => {
+            if (!isScanning) {
+                startScanner();
             } else {
-                showEmptyMessage();
+                stopScanner();
             }
         });
 
-        // REPRODUCIR SONIDO AL ESCANEAR (Bip virtual usando la API Web Audio nativa)
-        function playBeep() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Tono alto
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.12); // Duración corta
-            } catch (e) {
-                console.log("Audio diferido hasta la interacción del usuario.");
-            }
-        }
-
-        // CONTROL INTEGRADO DE LA CÁMARA MÓVIL (A prueba de errores de compatibilidad)
         function startScanner() {
+            readerDiv.style.display = 'block';
+            
+            // Inicializamos el objeto si no existe
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            document.getElementById("placeholder-scanner").classList.add("hidden");
-            document.getElementById("btn-start").classList.add("hidden");
-            document.getElementById("btn-stop").classList.remove("hidden");
-
-            const config = { 
-                fps: 15, 
-                qrbox: (width, height) => {
-                    const minEdge = Math.min(width, height);
-                    const qrboxSize = Math.floor(minEdge * 0.7);
-                    return { width: qrboxSize, height: qrboxSize };
-                }
-            };
-
-            // PASO 1: Intentar consultar el inventario de cámaras físicas del dispositivo
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length > 0) {
-                    // En smartphones, la última cámara listada corresponde al sensor trasero principal
-                    const camaraTraseraId = devices[devices.length - 1].id;
-                    
-                    html5QrCode.start(
-                        camaraTraseraId, 
-                        config, 
-                        onScanSuccess, 
-                        () => {} // Callback pasivo continuo
-                    ).catch(err => {
-                        // Plan B flexible si falla el arranque por ID
-                        startFallbackScanner(config);
-                    });
-                } else {
-                    startFallbackScanner(config);
-                }
-            }).catch(() => {
-                startFallbackScanner(config);
-            });
-        }
-
-        // PLAN B: Solicitar la cámara mediante restricciones lógicas de entorno
-        function startFallbackScanner(config) {
+            // 'environment' intenta usar la cámara trasera en móviles
             html5QrCode.start(
-                { facingMode: "environment" }, // Prioriza cámara trasera de manera genérica
+                { facingMode: "environment" }, 
                 config, 
-                onScanSuccess, 
-                () => {}
-            ).catch(error => {
-                stopScanner();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Acceso Denegado',
-                    html: `<p class="text-sm">No se pudo acceder a la cámara trasera de tu móvil.</p>
-                           <p class="text-xs text-amber-400 mt-2">💡 Recuerda que los navegadores exigen obligatoriamente protocolos seguros <b>HTTPS</b> o entornos locales <b>localhost</b> para activar la cámara.</p>`
-                });
+                onScanSuccess
+            ).then(() => {
+                isScanning = true;
+                btnToggle.textContent = 'Detener Cámara';
+                btnToggle.classList.add('btn-stop');
+            }).catch(err => {
+                console.error("Error al iniciar la cámara:", err);
+                alert("No se pudo acceder a la cámara. Asegúrate de dar los permisos necesarios.");
+                readerDiv.style.display = 'none';
             });
         }
 
-        // ACCIÓN EXITOSA: Cuando el lector decodifica un código QR
-        function onScanSuccess(decodedText) {
-            playBeep();
-            stopScanner(); // Detiene la cámara temporalmente para evitar lecturas duplicadas en bucle
+        function stopScanner() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    btnToggle.textContent = 'Iniciar Cámara';
+                    btnToggle.classList.remove('btn-stop');
+                    readerDiv.style.display = 'none';
+                }).catch(err => {
+                    console.error("Error al detener la cámara:", err);
+                });
+            }
+        }
 
-            const ahora = new Date();
-            const timestamp = ahora.toLocaleString('es-PE', {
-                year: 'numeric',
-                month: '2-digit',
+        function onScanSuccess(decodedText, decodedResult) {
+            // Detenemos el escáner momentáneamente tras una lectura exitosa
+            stopScanner();
+            
+            // Sonido opcional o vibración (si el dispositivo lo permite)
+            if (navigator.vibrate) navigator.vibrate(200);
+
+            // Agregar los datos a la tabla
+            addRecordToTable(decodedText);
+        }
+
+        function addRecordToTable(text) {
+            // Remover el mensaje de "No hay códigos" si existe
+            if (rowEmpty) {
+                rowEmpty.remove();
+            }
+
+            // Obtener fecha y hora actual formateada
+            const now = new Date();
+            const dateTimeString = now.toLocaleString('es-ES', {
                 day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit',
-                hour12: false
+                second: '2-digit'
             });
 
-            // Registrar nuevo objeto de datos
-            const nuevoRegistro = {
-                id: registrosQR.length + 1,
-                contenido: decodedText.trim(),
-                fechaHora: timestamp
-            };
-
-            registrosQR.unshift(nuevoRegistro); // Inserta arriba de la tabla (más reciente primero)
-            localStorage.setItem("registros_qr_asistencia", JSON.stringify(registrosQR));
-            renderTable();
-
-            // Desplegar una alerta animada estética y auto-concluida
-            Swal.fire({
-                icon: 'success',
-                title: '¡Código QR Escaneado!',
-                html: `<div class="p-3 bg-slate-100 rounded-lg text-slate-800 font-mono text-xs break-all">${decodedText}</div>`,
-                timer: 2000,
-                showConfirmButton: false,
-                willClose: () => {
-                    startScanner(); // Reanuda la cámara fluidamente
-                }
-            });
-        }
-
-        // DETENER EL LECTOR Y LIMPIAR LA INTERFAZ
-        function stopScanner() {
-            document.getElementById("placeholder-scanner").classList.remove("hidden");
-            document.getElementById("btn-start").classList.remove("hidden");
-            document.getElementById("btn-stop").classList.add("hidden");
-
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('reader').innerHTML = "";
-                }).catch(err => console.log("Liberación de recursos: ", err));
-            }
-        }
-
-        // RENDERIZAR TABLA DE MANERA DINÁMICA
-        function renderTable() {
-            const tbody = document.getElementById('lista-registros');
-            tbody.innerHTML = '';
-
-            if (registrosQR.length === 0) {
-                showEmptyMessage();
-                return;
+            // Crear una nueva fila
+            const row = document.createElement('tr');
+            
+            const cellDateTime = document.createElement('td');
+            cellDateTime.textContent = dateTimeString;
+            
+            const cellText = document.createElement('td');
+            // Si es un enlace, lo hacemos clickeable
+            if (text.startsWith('http://') || text.startsWith('https://')) {
+                const link = document.createElement('a');
+                link.href = text;
+                link.target = '_blank';
+                link.textContent = text;
+                cellText.appendChild(link);
+            } else {
+                cellText.textContent = text;
             }
 
-            registrosQR.forEach((reg, index) => {
-                const numeroItem = registrosQR.length - index;
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-700/40 transition border-b border-slate-700/40 text-slate-300">
-                        <td class="p-4 text-center font-bold text-slate-500">${numeroItem}</td>
-                        <td class="p-4 font-mono text-xs text-blue-300 break-all max-w-xs">${escapeHtml(reg.contenido)}</td>
-                        <td class="p-4 text-slate-400 font-medium whitespace-nowrap text-xs">${reg.fechaHora}</td>
-                    </tr>
-                `;
-            });
+            row.appendChild(cellDateTime);
+            row.appendChild(cellText);
+
+            // Insertar la nueva fila al principio de la tabla (historial reciente primero)
+            tableBody.insertBefore(row, tableBody.firstChild);
         }
-
-        function showEmptyMessage() {
-            const tbody = document.getElementById('lista-registros');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="3" class="p-12 text-center text-slate-500 font-medium">
-                        <span class="text-3xl block mb-2">📥</span>
-                        No hay códigos QR registrados en el historial de hoy.
-                    </td>
-                </tr>
-            `;
-        }
-
-        // LIMPIAR LOCALSTORAGE
-        function clearHistory() {
-            if(registrosQR.length === 0) return;
-
-            Swal.fire({
-                title: '¿Vaciar historial?',
-                text: "Esta acción borrar
+    </script>
+</body>
+</html>
